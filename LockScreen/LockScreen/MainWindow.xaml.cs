@@ -7,7 +7,7 @@ namespace LockScreen
 {
     public partial class MainWindow : Window
     {
-        private Storyboard Jump, MoveBack, MoveUp;
+        private Storyboard MoveBack, MoveUp;
         private IInputElement InputElement;
         private double MouseY, ScreenTop;
         private bool IsDragging;
@@ -20,17 +20,15 @@ namespace LockScreen
 
             this.Loaded += MainWindow_Loaded;
 
-            this.Jump = (Storyboard)Resources["Jump"];
             this.MoveBack = (Storyboard)Resources["MoveBack"];
             this.MoveUp = (Storyboard)Resources["MoveUp"];
+
+            this.MoveBack.Completed += MoveBack_Completed;
+            this.MoveUp.Completed += MoveUp_Completed;
 
             this.MainGrid.MouseLeftButtonDown += MainGrid_MouseLeftButtonDown;
             this.MainGrid.MouseMove += MainGrid_MouseMove;
             this.MainGrid.MouseLeftButtonUp += MainGrid_MouseLeftButtonUp;
-
-            this.Jump.Completed += Jump_Completed;
-            this.MoveBack.Completed += MoveBack_Completed;
-            this.MoveUp.Completed += MoveUp_Completed;
         }
 
         private void MainGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -62,11 +60,7 @@ namespace LockScreen
                 this.IsDragging = false;
             }
 
-            if (Translate.Y == 0)
-            {
-                this.Jump.Begin();
-            }
-            else if (Translate.Y > (ScreenTop/2))
+            if (Translate.Y > (ScreenTop/2))
             {
                 this.MoveBack.Begin();
             }
@@ -80,12 +74,6 @@ namespace LockScreen
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             this.MoveBack.Begin();
-        }
-
-        private void Jump_Completed(object sender, EventArgs e)
-        {
-            this.Translate.Y = 0;
-            this.Jump.Stop();
         }
 
         private void MoveBack_Completed(object sender, EventArgs e)

@@ -1,11 +1,5 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Storyboard x:Key="Jump">
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="-30" Duration="0:0:0.18" AccelerationRatio="0.3" DecelerationRatio="0.7"/>
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" BeginTime="0:0:0.18" To="0" Duration="0:0:0.14" AccelerationRatio="0.3" DecelerationRatio="0.7"/>
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" BeginTime="0:0:0.32" To="-10" Duration="0:0:0.12" AccelerationRatio="0.3" DecelerationRatio="0.7"/>
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" BeginTime="0:0:0.44" To="0" Duration="0:0:0.10" AccelerationRatio="0.3" DecelerationRatio="0.7"/>
-    </Storyboard>
     <Storyboard x:Key="MoveBack">
         <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.14" AccelerationRatio="0.3" DecelerationRatio="0.7"/>
         <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" BeginTime="0:0:0.14" To="-16" Duration="0:0:0.12" AccelerationRatio="0.3" DecelerationRatio="0.7"/>
