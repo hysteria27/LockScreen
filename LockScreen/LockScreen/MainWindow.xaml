@@ -4,13 +4,16 @@
         AllowsTransparency="True" WindowStyle="None" WindowState="Maximized"
         ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Background="{x:Null}">
     <Window.Resources>
-        <ResourceDictionary Source="pack://application:,,,/Storyboard.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/Resources/Storyboard.xaml" />
     </Window.Resources>
     <Canvas Name="Canvas">
-        <Rectangle Fill="Red" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}">
+        <Rectangle Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}">
             <Rectangle.RenderTransform>
                 <TranslateTransform x:Name="Translate" />
             </Rectangle.RenderTransform>
+            <Rectangle.Fill>
+                <VisualBrush Stretch="UniformToFill" Visual="{StaticResource VisualBackground}" />
+            </Rectangle.Fill>
         </Rectangle>
     </Canvas>
 </Window>
