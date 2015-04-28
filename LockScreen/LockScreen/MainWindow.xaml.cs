@@ -9,83 +9,98 @@ namespace LockScreen
     {
         private Storyboard MoveBack, MoveUp;
         private IInputElement InputElement;
-        private double MouseY, ScreenTop;
+        private double MouseY, CurrentTranslate, ScreenTop;
         private bool IsDragging;
 
         public MainWindow()
         {
             InitializeComponent();
-            this.ScreenTop = -SystemParameters.PrimaryScreenHeight;
-            this.Translate.Y = ScreenTop;
+            ScreenTop = -SystemParameters.PrimaryScreenHeight;
+            Translate.Y = ScreenTop;
+
+            MoveBack = (Storyboard)Resources["MoveBack"];
+            MoveUp = (Storyboard)Resources["MoveUp"];
 
             this.Loaded += MainWindow_Loaded;
+            this.PreviewMouseLeftButtonDown += MainWindow_PreviewMouseLeftButtonDown;
+            this.PreviewMouseMove += MainWindow_PreviewMouseMove;
+            this.PreviewMouseLeftButtonUp += MainWindow_PreviewMouseLeftButtonUp;
 
-            this.MoveBack = (Storyboard)Resources["MoveBack"];
-            this.MoveUp = (Storyboard)Resources["MoveUp"];
-
-            this.MoveBack.Completed += MoveBack_Completed;
-            this.MoveUp.Completed += MoveUp_Completed;
-
-            this.MainGrid.MouseLeftButtonDown += MainGrid_MouseLeftButtonDown;
-            this.MainGrid.MouseMove += MainGrid_MouseMove;
-            this.MainGrid.MouseLeftButtonUp += MainGrid_MouseLeftButtonUp;
-        }
-
-        private void MainGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            this.MouseY = Mouse.GetPosition((IInputElement)sender).Y;
-            this.InputElement = (IInputElement)sender;
-            this.InputElement.CaptureMouse();
-        }
-
-        private void MainGrid_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.LeftButton.Equals(MouseButtonState.Pressed))
-                this.IsDragging = true;
-
-            if (this.IsDragging && this.InputElement != null)
-            {
-                var NewY = Mouse.GetPosition((IInputElement)sender).Y;
-                if (NewY < this.MouseY)
-                    Translate.Y = NewY - this.MouseY;
-            }
-        }
-
-        private void MainGrid_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            if (this.InputElement != null)
-            {
-                this.InputElement.ReleaseMouseCapture();
-                this.InputElement = null;
-                this.IsDragging = false;
-            }
-
-            if (Translate.Y > (ScreenTop/2))
-            {
-                this.MoveBack.Begin();
-            }
-            else
-            {
-                ((DoubleAnimation)MoveUp.Children[0]).To = ScreenTop;
-                this.MoveUp.Begin();
-            }
+            MoveBack.Completed += MoveBack_Completed;
+            MoveUp.Completed += MoveUp_Completed;
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            this.MoveBack.Begin();
+            MoveUp.Begin();    // to make MoveUp controllable.
+            MoveUp.Stop();     // then force it stop.
+
+            this.Dispatcher.BeginInvoke(new Action(MoveBack.Begin));
+        }
+
+        private void MainWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            MouseY = Mouse.GetPosition((IInputElement)sender).Y;
+            InputElement = (IInputElement)sender;
+            InputElement.CaptureMouse();
+
+            CurrentTranslate = Translate.Y;
+            Translate.Y = CurrentTranslate;
+
+            if (MoveBack.GetCurrentState() == ClockState.Active)
+                MoveBack.Stop();
+
+            if (MoveUp.GetCurrentState() == ClockState.Active)
+                MoveUp.Stop();
+        }
+
+        private void MainWindow_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton.Equals(MouseButtonState.Pressed))
+                IsDragging = true;
+
+            if (IsDragging && InputElement != null)
+            {
+                var NewY = Mouse.GetPosition((IInputElement)sender).Y;
+                if (Translate.Y <= 0)
+                    Translate.Y = CurrentTranslate + (NewY - MouseY);
+
+                if (Translate.Y > 0)
+                    Translate.Y = 0;
+            }
+        }
+
+        private void MainWindow_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (InputElement != null)
+            {
+                InputElement.ReleaseMouseCapture();
+                InputElement = null;
+                IsDragging = false;
+                CurrentTranslate = 0;
+            }
+
+            if (Translate.Y < 0 && Translate.Y > (ScreenTop / 2))
+            {
+                MoveBack.Begin();
+            }
+            else if (Translate.Y <= (ScreenTop / 2))
+            {
+                ((DoubleAnimation)MoveUp.Children[0]).To = ScreenTop;
+                MoveUp.Begin();
+            }
         }
 
         private void MoveBack_Completed(object sender, EventArgs e)
         {
-            this.Translate.Y = 0;
-            this.MoveBack.Stop();
+            Translate.Y = 0;
+            MoveBack.Stop();
         }
 
         private void MoveUp_Completed(object sender, EventArgs e)
         {
-            this.Translate.Y = ScreenTop;
-            this.MoveUp.Stop();
+            Translate.Y = ScreenTop;
+            MoveUp.Stop();
             Application.Current.Shutdown();
         }
     }

@@ -6,11 +6,11 @@
     <Window.Resources>
         <ResourceDictionary Source="pack://application:,,,/Storyboard.xaml" />
     </Window.Resources>
-    <Grid x:Name="MainGrid">
-        <Rectangle Fill="Red">
+    <Canvas Name="Canvas">
+        <Rectangle Fill="Red" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}">
             <Rectangle.RenderTransform>
                 <TranslateTransform x:Name="Translate" />
             </Rectangle.RenderTransform>
         </Rectangle>
-    </Grid>
+    </Canvas>
 </Window>
