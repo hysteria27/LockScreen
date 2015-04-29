@@ -12,7 +12,7 @@
                 <TranslateTransform x:Name="Translate" />
             </Rectangle.RenderTransform>
             <Rectangle.Fill>
-                <VisualBrush Stretch="UniformToFill" Visual="{StaticResource VisualBackground}" />
+                <ImageBrush x:Name="BackgroundBrush" Stretch="UniformToFill" />
             </Rectangle.Fill>
         </Rectangle>
     </Canvas>

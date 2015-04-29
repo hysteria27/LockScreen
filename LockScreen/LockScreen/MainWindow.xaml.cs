@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Imaging;
 
 namespace LockScreen
 {
@@ -11,10 +16,15 @@ namespace LockScreen
         private IInputElement InputElement;
         private double MouseY, CurrentTranslate, ScreenTop;
         private bool IsDragging;
+        private ImageLoader ImgLoader;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            ImgLoader = new ImageLoader(Properties.Settings.Default.ImagePath);
+            GetImage();
+
             ScreenTop = -SystemParameters.PrimaryScreenHeight;
             Translate.Y = ScreenTop;
 
@@ -30,12 +40,42 @@ namespace LockScreen
             MoveUp.Completed += MoveUp_Completed;
         }
 
+        private ImageSource BuiltInImage
+        {
+            get
+            {
+                BitmapImage BMP = new BitmapImage();
+                BMP.BeginInit();
+                BMP.CacheOption = BitmapCacheOption.OnLoad;
+                BMP.UriSource = new Uri("pack://application:,,,/Resources/wallpaper.jpg", UriKind.Absolute);
+                BMP.EndInit();
+
+                return BMP;
+            }
+        }
+
+        private void GetImage()
+        {
+            if (ImgLoader.IsCatched)
+            {
+                if (ImgLoader.ImageSources.Count() == 0)
+                    BackgroundBrush.ImageSource = BuiltInImage;
+                else
+                    BackgroundBrush.ImageSource = ImgLoader.ImageSources[0];
+            }
+            else
+            {
+                BackgroundBrush.ImageSource = BuiltInImage;
+            }
+        }
+
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             MoveUp.Begin();    // to make MoveUp controllable.
             MoveUp.Stop();     // then force it stop.
 
-            this.Dispatcher.BeginInvoke(new Action(MoveBack.Begin));
+            this.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Send,
+                new Action(MoveBack.Begin));
         }
 
         private void MainWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -102,6 +142,66 @@ namespace LockScreen
             Translate.Y = ScreenTop;
             MoveUp.Stop();
             Application.Current.Shutdown();
+        }
+    }
+
+    public class ImageLoader
+    {
+        private readonly string _root;
+        private readonly string[] _supportedExtensions;
+        private readonly bool _isCatched;
+        private IEnumerable<string> _files;
+        private List<ImageSource> _imageSources;
+
+        public ImageLoader(object FileDir)
+        {
+            _root = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            _supportedExtensions = new[] { ".bmp", ".jpeg", ".jpg", ".png", ".tiff" };
+
+            var DirPath = Path.Combine(Root, FileDir.ToString());
+            if (Directory.Exists(DirPath))      // Check if directory is exists.
+            {
+                _isCatched = true;
+                _files = Directory.GetFiles(Path.Combine(Root, FileDir.ToString()), "*.*").Where
+                    ((ext) => SupportedExtensions.Contains(Path.GetExtension(ext).ToLower()));
+
+                _imageSources = new List<ImageSource>();
+                foreach (var file in Files)
+                {
+                    BitmapImage BMP = new BitmapImage();
+                    BMP.BeginInit();
+                    BMP.CacheOption = BitmapCacheOption.OnLoad;
+                    BMP.UriSource = new Uri(file, UriKind.Absolute);
+                    BMP.EndInit();
+
+                    _imageSources.Add(BMP);
+                }
+            }
+        }
+
+        private string Root
+        {
+            get { return _root; }
+        }
+
+        private string[] SupportedExtensions
+        {
+            get { return _supportedExtensions; }
+        }
+
+        public bool IsCatched
+        {
+            get { return _isCatched; }
+        }
+
+        private IEnumerable<string> Files
+        {
+            get { return _files; }
+        }
+
+        public List<ImageSource> ImageSources
+        {
+            get { return _imageSources; }
         }
     }
 }
