@@ -1,11 +1,18 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Storyboard x:Key="MoveBack">
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.40" AccelerationRatio="0.3" DecelerationRatio="0.7" />
+        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.40" AccelerationRatio="0.4" DecelerationRatio="0.6" />
         <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" BeginTime="0:0:0.40" To="-50" Duration="0:0:0.40" AccelerationRatio="0.6" DecelerationRatio="0.4" />
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" BeginTime="0:0:0.80" To="0" Duration="0:0:0.40" AccelerationRatio="0.2" DecelerationRatio="0.8" />
+        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" BeginTime="0:0:0.80" To="0" Duration="0:0:0.40" AccelerationRatio="0.5" DecelerationRatio="0.5" />
     </Storyboard>
     <Storyboard x:Key="MoveUp">
         <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" Duration="0:0:1.00" AccelerationRatio="0.4" DecelerationRatio="0.6" />
+    </Storyboard>
+    
+    <Storyboard x:Key="FadeIn">
+        <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Opacity" To="1" />
+    </Storyboard>
+    <Storyboard x:Key="FadeOut">
+        <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Opacity" To="0" />
     </Storyboard>
 </ResourceDictionary>

@@ -1,43 +1,50 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace LockScreen
 {
     public partial class MainWindow : Window
     {
-        private Storyboard MoveBack, MoveUp;
-        private IInputElement InputElement;
-        private double MouseY, CurrentTranslate, ScreenTop;
-        private bool IsDragging;
+        #region Fields...
+        private DispatcherTimer Timer;
         private ImageLoader ImgLoader;
+        private IInputElement InputElement;
+        private Storyboard MoveBack, MoveUp, FadeIn, FadeOut;
+        private bool IsImageMoreThanOne;
+        private double MouseY, CurrentTranslate, ScreenTop;
+        private int ImageIndex;
+        #endregion
 
         public MainWindow()
         {
             InitializeComponent();
-
-            ImgLoader = new ImageLoader(Properties.Settings.Default.ImagePath);
-            GetImage();
-
             ScreenTop = -SystemParameters.PrimaryScreenHeight;
             Translate.Y = ScreenTop;
 
+            ImgLoader = new ImageLoader(Properties.Settings.Default.ImagePath);
+            GetSetImage();
+
+            Timer = new DispatcherTimer() { Interval = new TimeSpan(0,1,0), IsEnabled = false };
+            Timer.Tick += Timer_Tick;
+
             MoveBack = (Storyboard)Resources["MoveBack"];
             MoveUp = (Storyboard)Resources["MoveUp"];
+            FadeIn = (Storyboard)Resources["FadeIn"];
+            FadeOut = (Storyboard)Resources["FadeOut"];
+
+            MoveBack.Completed += MoveBack_Completed;
+            MoveUp.Completed += MoveUp_Completed;
 
             this.Loaded += MainWindow_Loaded;
             this.PreviewMouseLeftButtonDown += MainWindow_PreviewMouseLeftButtonDown;
             this.PreviewMouseMove += MainWindow_PreviewMouseMove;
             this.PreviewMouseLeftButtonUp += MainWindow_PreviewMouseLeftButtonUp;
-
-            MoveBack.Completed += MoveBack_Completed;
-            MoveUp.Completed += MoveUp_Completed;
         }
 
         private ImageSource BuiltInImage
@@ -46,7 +53,7 @@ namespace LockScreen
             {
                 BitmapImage BMP = new BitmapImage();
                 BMP.BeginInit();
-                BMP.CacheOption = BitmapCacheOption.OnLoad;
+                BMP.CacheOption = BitmapCacheOption.OnDemand;
                 BMP.UriSource = new Uri("pack://application:,,,/Resources/wallpaper.jpg", UriKind.Absolute);
                 BMP.EndInit();
 
@@ -54,27 +61,52 @@ namespace LockScreen
             }
         }
 
-        private void GetImage()
+        private void GetSetImage()
         {
             if (ImgLoader.IsCatched)
             {
-                if (ImgLoader.ImageSources.Count() == 0)
-                    BackgroundBrush.ImageSource = BuiltInImage;
+                if (ImgLoader.ImageSources.Count == 0)
+                    FrontBackground.Source = BuiltInImage;
                 else
-                    BackgroundBrush.ImageSource = ImgLoader.ImageSources[0];
+                {
+                    FrontBackground.Source = ImgLoader.ImageSources[0];
+                    IsImageMoreThanOne = ImgLoader.ImageSources.Count > 1;
+                }
             }
             else
             {
-                BackgroundBrush.ImageSource = BuiltInImage;
+                FrontBackground.Source = BuiltInImage;
             }
+        }
+
+        private void PlayShow()
+        {
+            ImageIndex = (ImageIndex + 1) % ImgLoader.ImageSources.Count;
+
+            if (FrontBackground.Opacity == 1)
+            {
+                BackBackground.Source = ImgLoader.ImageSources[ImageIndex];
+                FadeOut.Begin(FrontBackground);
+            }
+            else
+            {
+                FrontBackground.Source = ImgLoader.ImageSources[ImageIndex];
+                FadeIn.Begin(FrontBackground);
+            }
+        }
+
+        #region Events...
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            PlayShow();
         }
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            MoveUp.Begin();    // to make MoveUp controllable.
-            MoveUp.Stop();     // then force it stop.
+            MoveUp.Begin();    // To make MoveUp controllable.
+            MoveUp.Stop();     // Then force it stop.
 
-            this.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Send,
+            this.Dispatcher.BeginInvoke(DispatcherPriority.Send,
                 new Action(MoveBack.Begin));
         }
 
@@ -96,17 +128,18 @@ namespace LockScreen
 
         private void MainWindow_PreviewMouseMove(object sender, MouseEventArgs e)
         {
-            if (e.LeftButton.Equals(MouseButtonState.Pressed))
-                IsDragging = true;
-
-            if (IsDragging && InputElement != null)
+            if (InputElement != null)
             {
                 var NewY = Mouse.GetPosition((IInputElement)sender).Y;
-                if (Translate.Y <= 0)
+                if (Translate.Y < 1)
                     Translate.Y = CurrentTranslate + (NewY - MouseY);
 
                 if (Translate.Y > 0)
                     Translate.Y = 0;
+
+                if (CurrentTranslate != Translate.Y)
+                    if (Timer.IsEnabled)
+                        Timer.IsEnabled = false;
             }
         }
 
@@ -116,14 +149,11 @@ namespace LockScreen
             {
                 InputElement.ReleaseMouseCapture();
                 InputElement = null;
-                IsDragging = false;
                 CurrentTranslate = 0;
             }
 
             if (Translate.Y < 0 && Translate.Y > (ScreenTop / 2))
-            {
                 MoveBack.Begin();
-            }
             else if (Translate.Y <= (ScreenTop / 2))
             {
                 ((DoubleAnimation)MoveUp.Children[0]).To = ScreenTop;
@@ -135,6 +165,9 @@ namespace LockScreen
         {
             Translate.Y = 0;
             MoveBack.Stop();
+
+            if (IsImageMoreThanOne)         // If image more than one in desired folder,
+                Timer.IsEnabled = true;     // enable the timer to start slideshow.
         }
 
         private void MoveUp_Completed(object sender, EventArgs e)
@@ -143,65 +176,6 @@ namespace LockScreen
             MoveUp.Stop();
             Application.Current.Shutdown();
         }
-    }
-
-    public class ImageLoader
-    {
-        private readonly string _root;
-        private readonly string[] _supportedExtensions;
-        private readonly bool _isCatched;
-        private IEnumerable<string> _files;
-        private List<ImageSource> _imageSources;
-
-        public ImageLoader(object FileDir)
-        {
-            _root = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            _supportedExtensions = new[] { ".bmp", ".jpeg", ".jpg", ".png", ".tiff" };
-
-            var DirPath = Path.Combine(Root, FileDir.ToString());
-            if (Directory.Exists(DirPath))      // Check if directory is exists.
-            {
-                _isCatched = true;
-                _files = Directory.GetFiles(Path.Combine(Root, FileDir.ToString()), "*.*").Where
-                    ((ext) => SupportedExtensions.Contains(Path.GetExtension(ext).ToLower()));
-
-                _imageSources = new List<ImageSource>();
-                foreach (var file in Files)
-                {
-                    BitmapImage BMP = new BitmapImage();
-                    BMP.BeginInit();
-                    BMP.CacheOption = BitmapCacheOption.OnLoad;
-                    BMP.UriSource = new Uri(file, UriKind.Absolute);
-                    BMP.EndInit();
-
-                    _imageSources.Add(BMP);
-                }
-            }
-        }
-
-        private string Root
-        {
-            get { return _root; }
-        }
-
-        private string[] SupportedExtensions
-        {
-            get { return _supportedExtensions; }
-        }
-
-        public bool IsCatched
-        {
-            get { return _isCatched; }
-        }
-
-        private IEnumerable<string> Files
-        {
-            get { return _files; }
-        }
-
-        public List<ImageSource> ImageSources
-        {
-            get { return _imageSources; }
-        }
+        #endregion
     }
 }
