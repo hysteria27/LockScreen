@@ -153,18 +153,17 @@ namespace LockScreen
             }
 
             if (Translate.Y < 0 && Translate.Y > (ScreenTop / 2))
-                MoveBack.Begin();
+                Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(MoveBack.Begin));
             else if (Translate.Y <= (ScreenTop / 2))
             {
                 ((DoubleAnimation)MoveUp.Children[0]).To = ScreenTop;
-                MoveUp.Begin();
+                Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(MoveUp.Begin));
             }
         }
 
         private void MoveBack_Completed(object sender, EventArgs e)
         {
             Translate.Y = 0;
-            MoveBack.Stop();
 
             if (IsImageMoreThanOne)         // If image more than one in desired folder,
                 Timer.IsEnabled = true;     // enable the timer to start slideshow.
@@ -173,7 +172,7 @@ namespace LockScreen
         private void MoveUp_Completed(object sender, EventArgs e)
         {
             Translate.Y = ScreenTop;
-            MoveUp.Stop();
+
             Application.Current.Shutdown();
         }
         #endregion

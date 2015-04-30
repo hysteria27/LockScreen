@@ -1,6 +1,7 @@
 ﻿<Window x:Class="LockScreen.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dt="clr-namespace:LockScreen"
         AllowsTransparency="True" WindowStyle="None" WindowState="Maximized"
         ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Background="{x:Null}">
     <Window.Resources>
@@ -12,5 +13,8 @@
         </Canvas.RenderTransform>
         <Image x:Name="BackBackground" Stretch="UniformToFill" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}" />
         <Image x:Name="FrontBackground" Stretch="UniformToFill" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}" />
+        <WrapPanel Canvas.Left="50" Canvas.Bottom="30">
+            <dt:DateTime />
+        </WrapPanel>
     </Canvas>
 </Window>
