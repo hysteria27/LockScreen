@@ -18,11 +18,11 @@ namespace LockScreen
         public ImageLoader(object FileDir)
         {
             _root = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);  // Get full exe app location on disk.
-            _supportedExtensions = new[] { ".bmp", ".jpeg", ".jpg", ".png", ".tiff" };
-
+            
             var DirPath = Path.Combine(Root, FileDir.ToString());
             if (Directory.Exists(DirPath))  // Check if directory is exists.
             {
+                _supportedExtensions = new[] { ".bmp", ".jpeg", ".jpg", ".png" };
                 _isCatched = true;
                 _files = Directory.GetFiles(Path.Combine(Root, FileDir.ToString()), "*.*").Where
                     ((ext) => SupportedExtensions.Contains(Path.GetExtension(ext).ToLower()));
@@ -32,9 +32,10 @@ namespace LockScreen
                 {
                     BitmapImage BMP = new BitmapImage();
                     BMP.BeginInit();
-                    BMP.CacheOption = BitmapCacheOption.OnDemand;
+                    BMP.CacheOption = BitmapCacheOption.None;
                     BMP.UriSource = new Uri(file, UriKind.Absolute);
                     BMP.EndInit();
+                    BMP.Freeze();
 
                     _imageSources.Add(BMP);
                 }

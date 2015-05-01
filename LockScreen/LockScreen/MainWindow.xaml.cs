@@ -53,9 +53,10 @@ namespace LockScreen
             {
                 BitmapImage BMP = new BitmapImage();
                 BMP.BeginInit();
-                BMP.CacheOption = BitmapCacheOption.OnDemand;
+                BMP.CacheOption = BitmapCacheOption.None;
                 BMP.UriSource = new Uri("pack://application:,,,/Resources/wallpaper.jpg", UriKind.Absolute);
                 BMP.EndInit();
+                BMP.Freeze();
 
                 return BMP;
             }
@@ -106,18 +107,18 @@ namespace LockScreen
             MoveUp.Begin();    // To make MoveUp controllable.
             MoveUp.Stop();     // Then force it stop.
 
-            this.Dispatcher.BeginInvoke(DispatcherPriority.Send,
-                new Action(MoveBack.Begin));
+            this.Dispatcher.BeginInvoke(new Action(MoveBack.Begin));
         }
 
         private void MainWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            MouseY = Mouse.GetPosition((IInputElement)sender).Y;
-            InputElement = (IInputElement)sender;
-            InputElement.CaptureMouse();
+            MouseY = e.GetPosition(InputElement).Y;
 
             CurrentTranslate = Translate.Y;
             Translate.Y = CurrentTranslate;
+
+            InputElement = (IInputElement)sender;
+            InputElement.CaptureMouse();
 
             if (MoveBack.GetCurrentState() == ClockState.Active)
                 MoveBack.Stop();
@@ -130,16 +131,21 @@ namespace LockScreen
         {
             if (InputElement != null)
             {
-                var NewY = Mouse.GetPosition((IInputElement)sender).Y;
                 if (Translate.Y < 1)
+                {
+                    double NewY = e.GetPosition(InputElement).Y;
                     Translate.Y = CurrentTranslate + (NewY - MouseY);
 
-                if (Translate.Y > 0)
-                    Translate.Y = 0;
+                    if (Translate.Y > 0)
+                        Translate.Y = 0;
+                }
 
-                if (CurrentTranslate != Translate.Y)
-                    if (Timer.IsEnabled)
-                        Timer.IsEnabled = false;
+                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                {
+                    if (CurrentTranslate != Translate.Y)
+                        if (Timer.IsEnabled)
+                            Timer.IsEnabled = false;
+                }));
             }
         }
 
@@ -149,15 +155,16 @@ namespace LockScreen
             {
                 InputElement.ReleaseMouseCapture();
                 InputElement = null;
-                CurrentTranslate = 0;
-            }
 
-            if (Translate.Y < 0 && Translate.Y > (ScreenTop / 2))
-                Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(MoveBack.Begin));
-            else if (Translate.Y <= (ScreenTop / 2))
-            {
-                ((DoubleAnimation)MoveUp.Children[0]).To = ScreenTop;
-                Dispatcher.BeginInvoke(DispatcherPriority.Send, new Action(MoveUp.Begin));
+                CurrentTranslate = 0;
+
+                if (Translate.Y < 0 && Translate.Y > (ScreenTop / 2))
+                    MoveBack.Begin();
+                else if (Translate.Y <= (ScreenTop / 2))
+                {
+                    ((DoubleAnimation)MoveUp.Children[0]).To = ScreenTop;
+                    MoveUp.Begin();
+                }
             }
         }
 

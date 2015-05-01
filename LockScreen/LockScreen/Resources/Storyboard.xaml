@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Storyboard x:Key="MoveBack" FillBehavior="Stop">
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:1.00" AccelerationRatio="0.2" DecelerationRatio="0.8" />
+        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.30" AccelerationRatio="0.7" DecelerationRatio="0.3" />
     </Storyboard>
     <Storyboard x:Key="MoveUp" FillBehavior="Stop">
         <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" Duration="0:0:1.00" AccelerationRatio="0.4" DecelerationRatio="0.6" />

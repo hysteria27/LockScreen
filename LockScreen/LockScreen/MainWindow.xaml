@@ -13,8 +13,6 @@
         </Canvas.RenderTransform>
         <Image x:Name="BackBackground" Stretch="UniformToFill" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}" />
         <Image x:Name="FrontBackground" Stretch="UniformToFill" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}" />
-        <WrapPanel Canvas.Left="50" Canvas.Bottom="30">
-            <dt:DateTime />
-        </WrapPanel>
+        <dt:DateTime Canvas.Left="50" Canvas.Bottom="30" />
     </Canvas>
 </Window>
