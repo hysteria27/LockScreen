@@ -32,7 +32,7 @@ namespace LockScreen
                 {
                     BitmapImage BMP = new BitmapImage();
                     BMP.BeginInit();
-                    BMP.CacheOption = BitmapCacheOption.None;
+                    BMP.CacheOption = BitmapCacheOption.OnLoad;
                     BMP.UriSource = new Uri(file, UriKind.Absolute);
                     BMP.EndInit();
                     BMP.Freeze();

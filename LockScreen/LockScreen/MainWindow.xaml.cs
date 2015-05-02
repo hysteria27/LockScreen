@@ -24,6 +24,9 @@ namespace LockScreen
         public MainWindow()
         {
             InitializeComponent();
+            Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline),
+                new FrameworkPropertyMetadata { DefaultValue = 24 });
+
             ScreenTop = -SystemParameters.PrimaryScreenHeight;
             Translate.Y = ScreenTop;
 
@@ -43,17 +46,17 @@ namespace LockScreen
 
             this.Loaded += MainWindow_Loaded;
             this.PreviewMouseLeftButtonDown += MainWindow_PreviewMouseLeftButtonDown;
-            this.PreviewMouseMove += MainWindow_PreviewMouseMove;
             this.PreviewMouseLeftButtonUp += MainWindow_PreviewMouseLeftButtonUp;
         }
 
-        private ImageSource BuiltInImage
+        private static ImageSource BuiltInImage
         {
             get
             {
                 BitmapImage BMP = new BitmapImage();
                 BMP.BeginInit();
-                BMP.CacheOption = BitmapCacheOption.None;
+                BMP.DecodePixelWidth = 900;
+                BMP.CacheOption = BitmapCacheOption.OnLoad;
                 BMP.UriSource = new Uri("pack://application:,,,/Resources/wallpaper.jpg", UriKind.Absolute);
                 BMP.EndInit();
                 BMP.Freeze();
@@ -125,6 +128,8 @@ namespace LockScreen
 
             if (MoveUp.GetCurrentState() == ClockState.Active)
                 MoveUp.Stop();
+
+            this.PreviewMouseMove += MainWindow_PreviewMouseMove;
         }
 
         private void MainWindow_PreviewMouseMove(object sender, MouseEventArgs e)
@@ -153,9 +158,9 @@ namespace LockScreen
         {
             if (InputElement != null)
             {
+                this.PreviewMouseMove -= MainWindow_PreviewMouseMove;
                 InputElement.ReleaseMouseCapture();
                 InputElement = null;
-
                 CurrentTranslate = 0;
 
                 if (Translate.Y < 0 && Translate.Y > (ScreenTop / 2))
@@ -179,7 +184,6 @@ namespace LockScreen
         private void MoveUp_Completed(object sender, EventArgs e)
         {
             Translate.Y = ScreenTop;
-
             Application.Current.Shutdown();
         }
         #endregion

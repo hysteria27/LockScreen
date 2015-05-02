@@ -3,16 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dt="clr-namespace:LockScreen"
         AllowsTransparency="True" WindowStyle="None" WindowState="Maximized"
-        ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Background="{x:Null}">
+        ResizeMode="NoResize" ShowInTaskbar="False" Topmost="True" Background="#01FFFFFF">
     <Window.Resources>
         <ResourceDictionary Source="pack://application:,,,/Resources/Storyboard.xaml" />
     </Window.Resources>
-    <Canvas x:Name="Canvas">
-        <Canvas.RenderTransform>
+    <Grid x:Name="Canvas">
+        <Grid.RenderTransform>
             <TranslateTransform x:Name="Translate" />
-        </Canvas.RenderTransform>
-        <Image x:Name="BackBackground" Stretch="UniformToFill" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}" />
-        <Image x:Name="FrontBackground" Stretch="UniformToFill" Width="{Binding ActualWidth, ElementName=Canvas}" Height="{Binding ActualHeight, ElementName=Canvas}" />
-        <dt:DateTime Canvas.Left="50" Canvas.Bottom="30" />
-    </Canvas>
+        </Grid.RenderTransform>
+        
+        <Image x:Name="BackBackground" Stretch="UniformToFill" />
+        <Image x:Name="FrontBackground" Stretch="UniformToFill" />
+        <dt:DateTime HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="50,0,0,30" />
+    </Grid>
 </Window>
