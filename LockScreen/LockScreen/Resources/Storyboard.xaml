@@ -1,16 +1,16 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Storyboard x:Key="MoveBack" FillBehavior="Stop">
-        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.3" AccelerationRatio="0.7" DecelerationRatio="0.3" />
+        <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" To="0" Duration="0:0:0.5" AccelerationRatio="0.7" DecelerationRatio="0.3" />
     </Storyboard>
     <Storyboard x:Key="MoveUp" FillBehavior="Stop">
         <DoubleAnimation Storyboard.TargetName="Translate" Storyboard.TargetProperty="Y" Duration="0:0:1" AccelerationRatio="0.4" DecelerationRatio="0.6" />
     </Storyboard>
 
-    <Storyboard x:Key="FadeIn" FillBehavior="Stop">
+    <Storyboard x:Key="FadeIn">
         <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Opacity" To="1" />
     </Storyboard>
-    <Storyboard x:Key="FadeOut" FillBehavior="Stop">
+    <Storyboard x:Key="FadeOut">
         <DoubleAnimation Duration="0:0:0.25" Storyboard.TargetProperty="Opacity" To="0" />
     </Storyboard>
 </ResourceDictionary>

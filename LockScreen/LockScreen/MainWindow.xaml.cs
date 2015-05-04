@@ -15,26 +15,36 @@ namespace LockScreen
         private DispatcherTimer Timer;
         private ImageLoader ImgLoader;
         private IInputElement InputElement;
+        private static ScreenCapture WindowBackground;
         private Storyboard MoveBack, MoveUp, FadeIn, FadeOut;
         private bool IsImageMoreThanOne;
-        private double MouseY, CurrentTranslate, ScreenTop;
+        private static double MouseY, CurrentTranslate;
+        private static readonly double
+            ScreenWidth = SystemParameters.PrimaryScreenWidth,
+            ScreenHeight = SystemParameters.PrimaryScreenHeight;
         private int ImageIndex;
         #endregion
 
         public MainWindow()
         {
             InitializeComponent();
-            Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline),
-                new FrameworkPropertyMetadata { DefaultValue = 24 });
+            RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.LowQuality);
+            RenderOptions.SetCachingHint(this, CachingHint.Cache);
+            //Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline),
+            //    new FrameworkPropertyMetadata { DefaultValue = 24 });     // Default is 60.
 
-            ScreenTop = -SystemParameters.PrimaryScreenHeight;
-            Translate.Y = ScreenTop;
+            // Use desktop screenshot as a window background instead set the window transparency to true,
+            // that will causing a poor performance.
+            WindowBackground = new ScreenCapture(0, 0, (int)ScreenWidth, (int)ScreenHeight);
 
             ImgLoader = new ImageLoader(Properties.Settings.Default.ImagePath);
             GetSetImage();
 
-            Timer = new DispatcherTimer() { Interval = new TimeSpan(0,1,0), IsEnabled = false };
-            Timer.Tick += Timer_Tick;
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+            {
+                Timer = new DispatcherTimer() { Interval = TimeSpan.FromMinutes(0.05), IsEnabled = false };
+                Timer.Tick += Timer_Tick;
+            }));
 
             MoveBack = (Storyboard)Resources["MoveBack"];
             MoveUp = (Storyboard)Resources["MoveUp"];
@@ -44,9 +54,9 @@ namespace LockScreen
             MoveBack.Completed += MoveBack_Completed;
             MoveUp.Completed += MoveUp_Completed;
 
-            this.Loaded += MainWindow_Loaded;
-            this.PreviewMouseLeftButtonDown += MainWindow_PreviewMouseLeftButtonDown;
-            this.PreviewMouseLeftButtonUp += MainWindow_PreviewMouseLeftButtonUp;
+            RootPanel.Loaded += RootPanel_Loaded;
+            RootPanel.MouseLeftButtonDown += RootPanel_MouseLeftButtonDown;
+            RootPanel.MouseLeftButtonUp += RootPanel_MouseLeftButtonUp;
         }
 
         private static ImageSource BuiltInImage
@@ -55,7 +65,6 @@ namespace LockScreen
             {
                 BitmapImage BMP = new BitmapImage();
                 BMP.BeginInit();
-                BMP.DecodePixelWidth = 900;
                 BMP.CacheOption = BitmapCacheOption.OnLoad;
                 BMP.UriSource = new Uri("pack://application:,,,/Resources/wallpaper.jpg", UriKind.Absolute);
                 BMP.EndInit();
@@ -67,6 +76,8 @@ namespace LockScreen
 
         private void GetSetImage()
         {
+            this.Background = new ImageBrush(WindowBackground.Captured);
+
             if (ImgLoader.IsCatched)
             {
                 if (ImgLoader.ImageSources.Count == 0)
@@ -80,6 +91,7 @@ namespace LockScreen
             else
             {
                 FrontBackground.Source = BuiltInImage;
+                ImgLoader = null;
             }
         }
 
@@ -105,17 +117,18 @@ namespace LockScreen
             PlayShow();
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        private void RootPanel_Loaded(object sender, RoutedEventArgs e)
         {
             MoveUp.Begin();    // To make MoveUp controllable.
             MoveUp.Stop();     // Then force it stop.
 
+            Translate.Y = -ScreenHeight;
             this.Dispatcher.BeginInvoke(new Action(MoveBack.Begin));
         }
 
-        private void MainWindow_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void RootPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            MouseY = e.GetPosition(InputElement).Y;
+            MouseY = e.GetPosition(this).Y;
 
             CurrentTranslate = Translate.Y;
             Translate.Y = CurrentTranslate;
@@ -129,45 +142,42 @@ namespace LockScreen
             if (MoveUp.GetCurrentState() == ClockState.Active)
                 MoveUp.Stop();
 
-            this.PreviewMouseMove += MainWindow_PreviewMouseMove;
+            RootPanel.MouseMove += RootPanel_MouseMove;
         }
 
-        private void MainWindow_PreviewMouseMove(object sender, MouseEventArgs e)
+        private void RootPanel_MouseMove(object sender, MouseEventArgs e)
         {
             if (InputElement != null)
             {
                 if (Translate.Y < 1)
                 {
-                    double NewY = e.GetPosition(InputElement).Y;
+                    double NewY = e.GetPosition(this).Y;
                     Translate.Y = CurrentTranslate + (NewY - MouseY);
 
                     if (Translate.Y > 0)
                         Translate.Y = 0;
                 }
 
-                Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
-                {
+                if (Timer.IsEnabled)
                     if (CurrentTranslate != Translate.Y)
-                        if (Timer.IsEnabled)
-                            Timer.IsEnabled = false;
-                }));
+                        Timer.IsEnabled = false;
             }
         }
 
-        private void MainWindow_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        private void RootPanel_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             if (InputElement != null)
             {
-                this.PreviewMouseMove -= MainWindow_PreviewMouseMove;
+                RootPanel.MouseMove -= RootPanel_MouseMove;
                 InputElement.ReleaseMouseCapture();
                 InputElement = null;
                 CurrentTranslate = 0;
 
-                if (Translate.Y < 0 && Translate.Y > (ScreenTop / 2))
+                if (Translate.Y < 0 && Translate.Y > (-ScreenHeight / 2))
                     MoveBack.Begin();
-                else if (Translate.Y <= (ScreenTop / 2))
+                else if (Translate.Y <= (-ScreenHeight / 2))
                 {
-                    ((DoubleAnimation)MoveUp.Children[0]).To = ScreenTop;
+                    ((DoubleAnimation)MoveUp.Children[0]).To = -ScreenHeight;
                     MoveUp.Begin();
                 }
             }
@@ -183,7 +193,7 @@ namespace LockScreen
 
         private void MoveUp_Completed(object sender, EventArgs e)
         {
-            Translate.Y = ScreenTop;
+            Translate.Y = -ScreenHeight;
             Application.Current.Shutdown();
         }
         #endregion
