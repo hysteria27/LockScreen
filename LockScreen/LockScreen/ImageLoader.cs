@@ -7,13 +7,13 @@ using System.Windows.Media.Imaging;
 
 namespace LockScreen
 {
-    public class ImageLoader
+    public sealed class ImageLoader
     {
         private readonly string _root;
         private readonly string[] _supportedExtensions;
         private readonly bool _isCatched;
-        private IEnumerable<string> _files;
-        private List<ImageSource> _imageSources;
+        private readonly IEnumerable<string> _files;
+        private readonly List<ImageSource> _imageSources;
 
         public ImageLoader(object FileDir)
         {

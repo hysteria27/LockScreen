@@ -15,7 +15,7 @@ namespace LockScreen
         private DispatcherTimer Timer;
         private ImageLoader ImgLoader;
         private IInputElement InputElement;
-        private static ScreenCapture WindowBackground;
+        private readonly ScreenCapture WindowBackground;
         private Storyboard MoveBack, MoveUp, FadeIn, FadeOut;
         private bool IsImageMoreThanOne;
         private static double MouseY, CurrentTranslate;
@@ -42,8 +42,8 @@ namespace LockScreen
 
             Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
             {
-                Timer = new DispatcherTimer() { Interval = TimeSpan.FromMinutes(0.05), IsEnabled = false };
-                Timer.Tick += Timer_Tick;
+                Timer = new DispatcherTimer() { Interval = TimeSpan.FromMinutes(1), IsEnabled = false };
+                Timer.Tick += delegate { PlayShow(); };
             }));
 
             MoveBack = (Storyboard)Resources["MoveBack"];
@@ -54,7 +54,7 @@ namespace LockScreen
             MoveBack.Completed += MoveBack_Completed;
             MoveUp.Completed += MoveUp_Completed;
 
-            RootPanel.Loaded += RootPanel_Loaded;
+            this.Loaded += MainWindow_Loaded;
             RootPanel.MouseLeftButtonDown += RootPanel_MouseLeftButtonDown;
             RootPanel.MouseLeftButtonUp += RootPanel_MouseLeftButtonUp;
         }
@@ -112,12 +112,7 @@ namespace LockScreen
         }
 
         #region Events...
-        private void Timer_Tick(object sender, EventArgs e)
-        {
-            PlayShow();
-        }
-
-        private void RootPanel_Loaded(object sender, RoutedEventArgs e)
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             MoveUp.Begin();    // To make MoveUp controllable.
             MoveUp.Stop();     // Then force it stop.
